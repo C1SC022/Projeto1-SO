@@ -14,6 +14,7 @@ function main(){
         do_initial_backup "$backup_folder"
     else
         echo "o backup existe"
+        compare "$backup_folder"
     fi
 }
 
@@ -69,36 +70,43 @@ function do_initial_backup()
 
 function compare_data()
 {
-    file1=$1
-    file2=$2
+    src_file=$1
+    dst_file=$2
 
-    if [ "$file1" -nt "$file2" ]; 
+    if [ "$src_file" -nt "$dst_file" ]; 
     then
+        echo "source mais novo"
         return 0;
     fi
-
+echo "backup mais novo"
     return 1;
 }
 
 function compare()
 {
-
+    dst_dir=$1
 
     #analisar files de fonte->backup
     for file in "$src_dir"/*; do
+        if [[ ! -f "$file" ]]; then
+            continue
+        fi
         file_name=$(basename "$file")
         src_file="$src_dir/$file_name"
         
-
+        
         if [ -f "$dst_dir/$file_name" ]; 
         then
+            
             dst_file="$dst_dir/$file_name"
             if compare_data "$src_file" "$dst_file" ; 
             then #executa quando retornar 0
-                cp "$src_file" "$dst_file" #substitui o ficheiro 2 com o 1
+            echo "substitui"
+                cp -a "$src_file" "$dst_file" #substitui o ficheiro 2 com o 1
             fi
         else
-            cp "$src_file" "$dst_dir"
+        echo "criei"
+            cp -a "$src_file" "$dst_dir" 
         fi
 
     done
@@ -108,10 +116,10 @@ function compare()
         file_name=$(basename "$file")
         
 
-        if [ ! -f "$src_dir/$file_name" ]; 
+       if [ ! -f "$src_dir/$file_name" ]; 
         then
-            echo "Removendo $file do $dst_dir, não existe em $src_dir"
-            rm "$file" "$dst_dir" 
+            echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
+            rm "$file" 
         fi
     done
 }
