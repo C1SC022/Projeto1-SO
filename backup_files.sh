@@ -25,7 +25,7 @@ function check_arg_amt()
 
     if [ $# != 2 ]; 
     then
-        echo "The number of arguments is wrong"
+        echo -e "\033[31mThe number of arguments is wrong.\033[0m"
         exit 1
     fi
 
@@ -38,7 +38,7 @@ function check_arg_path()
 
     if [ ! -d "$src_dir" ] || [ ! -d "$dst_dir" ]; 
     then 
-         echo "The directories inputed do not exist!"
+         echo -e "\033[31mThe directories inputed do not exist.\033[0m"
          exit 1
     fi
 
@@ -62,7 +62,7 @@ function do_initial_backup()
     mkdir -p "$new_folder"
 
     find "$src_dir" -maxdepth 1 -type f -exec cp {} "$new_folder" \;
-    echo "The files in $src_dir have been copied to the $new_folder"
+    echo -e "The files in \033[33m$src_dir\033[0m have been copied to the \033[32m$new_folder\033[0m directory."
     exit 0
 }
 
