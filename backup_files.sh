@@ -50,10 +50,10 @@ function do_backup()
 }
 
 
- #!/bin/bash
 
 
-function compareData(){
+function compareData()
+{
     file1=$1
     file2=$2
 
@@ -61,28 +61,29 @@ function compareData(){
         return 0;
     else
         return 1;
-
+    fi
 }
 
-function compare(){
-    dirFonte=$1
-    dirBackup=$2
+function compare()
+{
+
 
     #analisar files de fonte->backup
-    for file in "$dirFonte"/*; do
+    for file in "$src_dir"/*; do
         file_name=$(basename "$file")
-        file1="$dirFonte/$file_name"
+        file1="$src_dir/$file_name"
         
 
-        if [[ -f "$dirBackup/$file_name" ]]; then
-            file2="$dirBackup/$file_name"
+        if [[ -f "$dst_dir/$file_name" ]]; then
+            file2="$dst_dir/$file_name"
             if compareData "$file1" "$file2" ; then #executa quando returnar 0
                 cp "$file1" "$file2" #substitui o ficheiro 2 com o 1
             fi
         else
-            cp "$file1" "$dirBackup"
+            cp "$file1" "$dst_dir"
         fi
-    fi
+
+    done
 
 
 }
