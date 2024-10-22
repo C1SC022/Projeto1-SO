@@ -102,7 +102,16 @@ function compare()
 
     done
 
+ #analisar files de backup->fonte
+    for file in "$dst_dir"/*; do
+        file_name=$(basename "$file")
+        
 
+        if [ ! -f "$src_dir/$file_name"]; then
+            echo "Removendo $file do $dst_dir, não existe em $src_dir"
+            rm "$file" "$dst_dir" 
+        fi
+    done
 }
 
 
