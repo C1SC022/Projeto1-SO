@@ -6,10 +6,12 @@ function main(){
 
     check_arg_amt "$@"
     check_arg_path
+
+    backup_folder="$dst_dir/backup"
     if check_backup_existence ; 
     then
         echo "o check funciona"
-        do_initial_backup
+        do_initial_backup "$backup_folder"
     else
         echo "o backup existe"
     fi
@@ -56,8 +58,7 @@ function check_backup_existence()
 
 function do_initial_backup()
 {
-
-    new_folder="$dst_dir/backup"
+    new_folder=$1
     mkdir -p "$new_folder"
 
     find "$src_dir" -maxdepth 1 -type f -exec cp {} "$new_folder" \;
@@ -107,7 +108,8 @@ function compare()
         file_name=$(basename "$file")
         
 
-        if [ ! -f "$src_dir/$file_name"]; then
+        if [ ! -f "$src_dir/$file_name" ]; 
+        then
             echo "Removendo $file do $dst_dir, não existe em $src_dir"
             rm "$file" "$dst_dir" 
         fi
