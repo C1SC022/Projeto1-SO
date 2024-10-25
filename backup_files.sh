@@ -46,7 +46,7 @@ function main(){
     fi
 }
 
-
+#flag -c
 function simulation()
 {
    
@@ -101,25 +101,24 @@ function do_initial_backup()
     exit 0
 }
 
-
+#flag -b
 function exclude()
 {
         
-#nao funciona com mais do q uma linha nao sei porque
-mapfile -t linhas < "$exclude_file"
+    #ja funciona, aqui o problema era o file excluir vir do windows, por isso nao
+    #estava no formato certo
+    for line in $(cat "$exclude_file"); do
+        line="${line//$'\r'/}" #tira o \r do formato do windows
+        if [[ "$1" == "$line" ]]; then
+            return 0
+        fi
+    done
 
-for linha in "${linhas[@]}"; do
-    linha=$(echo "$linha" | xargs)
-    arg=$(echo "$1" | xargs)
-    echo "$linha"
-    echo "$arg"
-    if [[ "$linha" == "$arg" ]]; then
-        return 0  
-    fi
-done
-return 1
+
+    return 1
 }
 
+#flag -r
 function choose()
 {
     if [[ "$1" =~ "$regexpr" ]]; then
@@ -139,7 +138,7 @@ function compare_data()
         echo "source mais novo"
         return 0;
     fi
-echo "backup mais novo"
+    echo "backup mais novo"
     return 1;
 }
 
