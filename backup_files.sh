@@ -1,10 +1,38 @@
-src_dir="$1"
-dst_dir="$2"
+checking=false
+exclude_check=false
+exclude_file=""
+regexpr=""
+regexpr_check=false
 
 
 function main(){
-
+    #nao consegui por isto numa função a parte
+    while getopts ":cb:r:" opt; do
+        case ${opt} in 
+            c)
+                checking=true
+                ;;
+            b)
+                exclude_check=true
+                exclude_file="$OPTARG"
+                
+                ;;
+            r)
+                regexpr_check=true
+                regexpr="$OPTARG"
+                ;;
+            \?)
+                echo "Invalid option"
+                exit 1
+                ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+    
     check_arg_amt "$@"
+    src_dir="$1"
+    dst_dir="$2"
+    
     check_arg_path
 
     backup_folder="$dst_dir/backup"
@@ -19,11 +47,19 @@ function main(){
 }
 
 
-
+function simulation()
+{
+   
+    if $checking; then
+        echo "$*"
+    else
+        "$@"
+    fi
+}
 #Temos de checkar se o número de argumentos é válido
 function check_arg_amt()
 {
-
+    
     if [ $# != 2 ]; 
     then
         echo -e "\033[31mThe number of arguments is wrong.\033[0m"
@@ -36,7 +72,6 @@ function check_arg_amt()
 #checkar se os diretórios dados sao válidos
 function check_arg_path()
 {
-
     if [ ! -d "$src_dir" ] || [ ! -d "$dst_dir" ]; 
     then 
          echo -e "\033[31mThe directories inputed do not exist.\033[0m"
@@ -60,11 +95,37 @@ function check_backup_existence()
 function do_initial_backup()
 {
     new_folder=$1
-    mkdir -p "$new_folder"
-
-    find "$src_dir" -maxdepth 1 -type f -exec cp {} "$new_folder" \;
-    echo -e "The files in \033[33m$src_dir\033[0m have been copied to the \033[32m$new_folder\033[0m directory."
+    simulation mkdir -p "$new_folder"
+    
+    compare "$new_folder"   #estavasse a duplicar e nao a ler cada file, nao era o suposto duplicar
     exit 0
+}
+
+
+function exclude()
+{
+        
+#nao funciona com mais do q uma linha nao sei porque
+mapfile -t linhas < "$exclude_file"
+
+for linha in "${linhas[@]}"; do
+    linha=$(echo "$linha" | xargs)
+    arg=$(echo "$1" | xargs)
+    echo "$linha"
+    echo "$arg"
+    if [[ "$linha" == "$arg" ]]; then
+        return 0  
+    fi
+done
+return 1
+}
+
+function choose()
+{
+    if [[ "$1" =~ "$regexpr" ]]; then
+        return 1
+    fi
+    return 0
 }
 
 
@@ -92,6 +153,25 @@ function compare()
             continue
         fi
         file_name=$(basename "$file")
+        
+        #exclude the file and procede with the next file
+        if  [[ "$exclude_check" == true ]];
+        then
+        if  exclude "$file_name" ;
+            then 
+            continue
+        fi
+        fi
+        echo "aa $file_name"
+
+        if  [[ "$regexpr_check" == true ]];
+        then
+        if  choose "$file_name" ;
+            then 
+            continue
+        fi
+        fi
+
         src_file="$src_dir/$file_name"
         
         
@@ -102,11 +182,11 @@ function compare()
             if compare_data "$src_file" "$dst_file" ; 
             then #executa quando retornar 0
             echo "substitui"
-                cp -a "$src_file" "$dst_file" #substitui o ficheiro 2 com o 1
+                simulation cp -a "$src_file" "$dst_file" #substitui o ficheiro 2 com o 1
             fi
         else
         echo "criei"
-            cp -a "$src_file" "$dst_dir" 
+            simulation cp -a "$src_file" "$dst_dir" 
         fi
 
     done
@@ -119,7 +199,7 @@ function compare()
        if [ ! -f "$src_dir/$file_name" ]; 
         then
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
-            rm "$file" 
+            simulation rm "$file" 
         fi
     done
 }
