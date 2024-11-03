@@ -155,7 +155,7 @@ function compare()
 {
     dst_dir=$1
     src_dir=$2
-    echo "a $2"
+
     #analisar files de fonte->backup
     for file in "$src_dir"/*; do
         file_name=$(basename "$file")
@@ -181,7 +181,6 @@ function compare()
             continue
         fi
         fi
-        echo "aa $file_name"
 
         if  [[ "$regexpr_check" == true ]];
         then
@@ -213,13 +212,17 @@ function compare()
  #analisar files de backup->fonte
     for file in "$dst_dir"/*; do
         file_name=$(basename "$file")
-        
+        if [ "$file_name" = "*" ]; then
+            continue
+        fi
 
-       if [ ! -f "$src_dir/$file_name" ]; 
+        if [ ! -e "$src_dir/$file_name" ]; 
+        
         then
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
             simulation rm "$file" 
         fi
+       
     done
     return 0
 }
