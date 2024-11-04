@@ -1,8 +1,5 @@
 checking=false
-exclude_check=false
-exclude_file=""
-regexpr=""
-regexpr_check=false
+
 
 
 function main(){
@@ -11,15 +8,6 @@ function main(){
         case ${opt} in 
             c)
                 checking=true
-                ;;
-            b)
-                exclude_check=true
-                exclude_file="$OPTARG"
-                
-                ;;
-            r)
-                regexpr_check=true
-                regexpr="$OPTARG"
                 ;;
             \?)
                 echo "Invalid option"
@@ -101,31 +89,7 @@ function do_initial_backup()
     exit 0
 }
 
-#flag -b
-function exclude()
-{
-        
-    #ja funciona, aqui o problema era o file excluir vir do windows, por isso nao
-    #estava no formato certo
-    for line in $(cat "$exclude_file"); do
-        line="${line//$'\r'/}" #tira o \r do formato do windows
-        if [[ "$1" == "$line" ]]; then
-            return 0
-        fi
-    done
 
-
-    return 1
-}
-
-#flag -r
-function choose()
-{
-    if [[ "$1" =~ "$regexpr" ]]; then
-        return 1
-    fi
-    return 0
-}
 
 
 function compare_data()
@@ -153,23 +117,7 @@ function compare()
         fi
         file_name=$(basename "$file")
         
-        #exclude the file and procede with the next file
-        if  [[ "$exclude_check" == true ]];
-        then
-        if  exclude "$file_name" ;
-            then 
-            continue
-        fi
-        fi
-        echo "aa $file_name"
-
-        if  [[ "$regexpr_check" == true ]];
-        then
-        if  choose "$file_name" ;
-            then 
-            continue
-        fi
-        fi
+        
 
         src_file="$src_dir/$file_name"
         
@@ -193,7 +141,9 @@ function compare()
  #analisar files de backup->fonte
     for file in "$dst_dir"/*; do
         file_name=$(basename "$file")
-        
+        if [ "$file_name" = "*" ]; then
+            continue
+        fi
 
        if [ ! -f "$src_dir/$file_name" ]; 
         then
