@@ -106,12 +106,29 @@ function compare_data()
     return 1;
 }
 
+function delete(){
+    src_dir=$1
+    dst_dir=$2
+
+    for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
+        file_name=$(basename "$file")
+
+        
+       if [ ! -f "$src_dir/$file_name" ]; 
+        then
+            echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
+            simulation rm "$file" 
+        fi
+       
+    done
+}
+
 function compare()
 {
     dst_dir=$1
 
     #analisar files de fonte->backup
-    for file in "$src_dir"/*; do
+    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
         if [[ ! -f "$file" ]]; then
             continue
         fi
@@ -139,18 +156,8 @@ function compare()
     done
 
  #analisar files de backup->fonte
-    for file in "$dst_dir"/*; do
-        file_name=$(basename "$file")
-        if [ "$file_name" = "*" ]; then
-            continue
-        fi
-
-       if [ ! -f "$src_dir/$file_name" ]; 
-        then
-            echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
-            simulation rm "$file" 
-        fi
-    done
+    delete "$src_dir" "$dst_dir"
+    
 }
 
 
