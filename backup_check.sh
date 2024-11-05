@@ -29,12 +29,12 @@ function check_backup_existence()
 
 function check_backup_differences()
 {
-
+    echo -e "\033[32mBeginning comparison...\033[0m"
     for src_file in "$src_dir"/*;
     do
         filename=$(basename "$src_file")
-        echo "source file: $src_file"
-        echo "filename: $filename"
+        #echo "source file: $src_file"
+        #echo "filename: $filename"
         b_file="$dst_dir/$filename"
         #echo "backup file: $b_file"
         if ! check_file_existence "$b_file";
@@ -61,13 +61,13 @@ function check_backup_differences()
         filename=$(basename "$b_file")
         src_file="$src_dir/$filename"
         
-        if [ ! -f "$src_file" ]; 
+        if [ ! -f "$src_file" ]; #usar a check file existence aqui tenho de mudar!
         then
             echo "$filename exists in backup but not in source."
         fi
     done
 
-    echo "Comparing complete"
+    echo -e "\033[32mComparison complete\033[0m"
 
 }
 
