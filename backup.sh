@@ -151,14 +151,39 @@ function make_directory(){
    
 
 }
+function delete(){
+    src_dir=$1
+    dst_dir=$2
+
+    for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
+        file_name=$(basename "$file")
+        if [ -z "$(ls -A "$dst_dir")" ]; then
+            continue
+        fi
+
+        
+        if [ -d "$dst_dir/$file_name" ] && [ ! -d "$src_dir/$file_name" ]; then
+            echo "Removendo a $file_name do $dst_dir, não existe em $src_dir"
+            simulation rm -r "$file"
+        elif [ ! -f "$src_dir/$file_name" ] && [ -f "$dst_dir/$file_name" ]; 
+        then
+            echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
+            simulation rm "$file" 
+        fi
+       
+    done
+}
 function compare()
 {
     dst_dir=$1
     src_dir=$2
 
     #analisar files de fonte->backup
-    for file in "$src_dir"/*; do
+    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
         file_name=$(basename "$file")
+        if [ -z "$(ls -A "$src_dir")" ]; then
+            continue
+        fi
         #funciona recursivamente para todos os ficheiros dentro de outras direitorias
         #MUITO IMPORTANTE PARA O PC NAO ARREBENTAR
         #!!!muda para a cena ca em baixo porque assim nao triplica o ficheiro backup !!!!
@@ -210,22 +235,8 @@ function compare()
     done
 
  #analisar files de backup->fonte
-    for file in "$dst_dir"/*; do
-        file_name=$(basename "$file")
-        if [ "$file_name" = "*" ]; then
-            continue
-        fi
-
-        if [ ! -e "$src_dir/$file_name" ]; 
-        
-        then
-            echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
-            simulation rm "$file" 
-        fi
-       
-    done
+    delete "$src_dir" "$dst_dir"
+    
     return 0
 }
-
-
 main "$@"
