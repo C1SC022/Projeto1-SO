@@ -11,7 +11,6 @@ function main()
         echo -e "The backup folder exists in the \033[33m$dst_dir\033[0m directory."
         dst_dir="$dst_dir/backup"
     fi
-
     check_backup_differences
 
 }
@@ -34,24 +33,41 @@ function check_backup_differences()
     for src_file in "$src_dir"/*;
     do
         filename=$(basename "$src_file")
-        echo "$filename"
+        echo "source file: $src_file"
+        echo "filename: $filename"
         b_file="$dst_dir/$filename"
-        echo "$b_file"
-        if check_file_existence "$b_file";
+        #echo "backup file: $b_file"
+        if ! check_file_existence "$b_file";
         then
-            echo "$src_file doesn't exist in backup"
+            echo "$filename exists in source but not in backup"
             continue
         fi
 
-        src_md5=$(md5sum "$src_file" )
-        b_md5=$(md5sum "$b_file")
+        src_md5=$(md5sum "$src_file" | awk '{print $1}')
+        b_md5=$(md5sum "$b_file" | awk '{print $1}')
+
+        #echo "src_md5: $src_md5"
+        #echo "b_md5: $b_md5"
 
         if [ "$src_md5" != "$b_md5" ]; 
         then
-            echo "$src_file $b_file differ"
+            echo -e "\033[33m$src_file\033[0m & \033[33m$b_file\033[0m differ."
         fi
 
+    
     done
+    for b_file in "$dst_dir/"*; 
+    do
+        filename=$(basename "$b_file")
+        src_file="$src_dir/$filename"
+        
+        if [ ! -f "$src_file" ]; 
+        then
+            echo "$filename exists in backup but not in source."
+        fi
+    done
+
+    echo "Comparing complete"
 
 }
 
@@ -64,5 +80,7 @@ function check_file_existence()
         return 0
     fi
 }
+
+
 
 main "$@"
