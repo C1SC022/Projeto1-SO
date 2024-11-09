@@ -177,59 +177,52 @@ function compare()
 {
     dst_dir=$1
     src_dir=$2
-
+    
     #analisar files de fonte->backup
-    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
+    find "$src_dir" -mindepth 1 -maxdepth 1 | while IFS= read -r file; do
         file_name=$(basename "$file")
+        echo "filename: $file_name"
+
+        # Skip processing if the source directory is empty
         if [ -z "$(ls -A "$src_dir")" ]; then
             continue
         fi
-        #funciona recursivamente para todos os ficheiros dentro de outras direitorias
-        #MUITO IMPORTANTE PARA O PC NAO ARREBENTAR
-        #!!!muda para a cena ca em baixo porque assim nao triplica o ficheiro backup !!!!
-        #./backup.sh  "/mnt/c/Users/franc/Documents/GitHub/Projeto1-SO/tests/test1" "/mnt/c/Users/franc/Documents/GitHub/Projeto1-SO/test2"
-        if [[  -d "$file" ]]; then
-            make_directory "$dst_dir" "$file_name" 
+
+        # Handle directories recursively
+        if [[ -d "$file" ]]; then
+            make_directory "$dst_dir" "$file_name"
             new_dir="$dst_dir/$file_name"
             if compare "$new_dir" "$src_dir/$file_name"; then
-                dst_dir=$1      #fui redundante aqui mas honestaemnte nao sabia como fazer de outra maneira
-                src_dir=$2      #assim ao sair da recursiva com o return 0 de quando sai dos for ele retoma com os diretorios normais e continua de onde tinha deixado
+                # Reset directory variables after recursive call
+                dst_dir=$1
+                src_dir=$2
                 continue
             fi
         fi
-        
-        #exclude the file and procede with the next file
-        if  [[ "$exclude_check" == true ]];
-        then
-        if  exclude "$file_name" ;
-            then 
+
+        # Check for excluded files
+        if [[ "$exclude_check" == true ]] && exclude "$file_name"; then
             continue
         fi
-        fi
 
-        if  [[ "$regexpr_check" == true ]];
-        then
-        if  choose "$file_name" ;
-            then 
+        # Check against regular expressions
+        if [[ "$regexpr_check" == true ]] && choose "$file_name"; then
             continue
         fi
-        fi
 
+        # Define source and destination paths
         src_file="$src_dir/$file_name"
-        
-        
-        if [ -f "$dst_dir/$file_name" ]; 
-        then
-            
+
+        # Check if the file already exists in the destination
+        if [ -f "$dst_dir/$file_name" ]; then
             dst_file="$dst_dir/$file_name"
-            if compare_data "$src_file" "$dst_file" ; 
-            then #executa quando retornar 0
-            echo "substitui"
-                simulation cp -a "$src_file" "$dst_file" #substitui o ficheiro 2 com o 1
+            if compare_data "$src_file" "$dst_file"; then
+                echo "substitui"
+                simulation cp -a "$src_file" "$dst_file" # Replace file in the destination
             fi
         else
-        echo "criei"
-            simulation cp -a "$src_file" "$dst_dir" 
+            echo "criei"
+            simulation cp -a "$src_file" "$dst_dir"
         fi
 
     done
