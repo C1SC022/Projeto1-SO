@@ -4,6 +4,13 @@ dst_dir="$2"
 
 function main()
 {
+    # Check if the source directory exists
+    if check_source_existence;
+    then
+        echo -e "\033[31mA source directory doesn't exist.\033[0m"
+        exit
+    fi
+
     # Check if the backup directory indicated exists
     if  check_backup_existence;
     then
@@ -16,16 +23,24 @@ function main()
     check_backup_differences
 }
 
+function check_source_existence()
+{
+    if [ -d "$src_dir" ];
+    then
+        return 1; # Source directory exists return false (1)
+    fi
 
+    return 0; # Doesn't exist return true (0)
+}
 function check_backup_existence()
 {
 
     if [ -d "$dst_dir/backup" ];
     then
-        return 1; # Backup directory exists return true (1)
+        return 1; # Backup directory exists return false (1)
     fi
 
-    return 0; # Doesn't exist return false (0)
+    return 0; # Doesn't exist return true (0)
 }
 
 function check_backup_differences()
@@ -75,10 +90,10 @@ function check_file_existence()
 {
     if [ -f "$1" ];
     then
-        return 1 # file exists return true (1)
+        return 1 # file exists return false (1)
     fi 
     
-    return 0 # it doesn't exist return false (0)
+    return 0 # it doesn't exist return true (0)
 }
 
 
