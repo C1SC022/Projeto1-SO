@@ -118,6 +118,9 @@ function delete(){
     IFS=$'\n'
     for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
     unset IFS
+        if [[ ! -f "$file" ]]; then
+            continue
+        fi
         file_name=$(basename "$file")
 
         

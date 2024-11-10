@@ -3,3 +3,4 @@ two.txt
 five.txt
 esp ao
 .arquivo_oculto
+.dir_oculto

@@ -13,7 +13,7 @@ copied_size=0
 deleted=0
 deleted_size=0
 
-IFS=$'\n'
+
 function main(){
     #nao consegui por isto numa função a parte
     while getopts ":cb:r:" opt; do
@@ -208,7 +208,10 @@ function delete(){
         file_name=$(basename "$file")
 
         
-        if [[ -d "$file" ]] && [ ! -z "$(ls -A "$file")" ]; then
+        if [[ -d "$file" ]] && [ ! -z "$(ls -A "$file")" ] && [ -d "$src_dir/$file_name" ]; then #pus mais esta cena porque assim quando a pasta ja nao existir mas ela tem coisa la dentro nem seuqer tenta analisar os ficheiro e so da skip e elimina, o erro que estava a dar era q cagava se a pasta existia e depois apagava os ficheiros dentro e depois nao apagava a pasta, e so quando voltavas a executar o codigo é que funcionava
+        #nao sei se a por aquilo posso tirar do debaixo, pq agora parece algo redundante pq ele ja vai para baixo se nao existir por isso é so eliminar
+        #!! tentei por um else aqui para eliminar logo, continua redundante pq tinha que por as duas condições aqui em cima
+        #e depois ficava mais confuso, pelo menos assim esta separado, isto serve para entrar na recursiva e outro para eliminar
             new_dir="$dst_dir/$file_name"
             if delete "$src_dir/$file_name" "$new_dir" ; then
                 # Reset directory variables after recursive call
@@ -240,18 +243,18 @@ function compare()
 {
     dst_dir=$1
     src_dir=$2
-    
-    #analisar files de fonte->backup
+    IFS=$'\n'
+    # Skip processing if the source directory is empty
+
     if [ -z "$(ls -A "$src_dir")" ]; then
         
             return 0
     fi
-    
+    #analisar files de fonte->backup
     for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
     unset IFS
         file_name=$(basename "$file")
     
-        # Skip processing if the source directory is empty
         
 
         # Handle directories recursively
@@ -279,25 +282,22 @@ function compare()
         src_file="$src_dir/$file_name"
         
         
-        if [ -f "$dst_dir/$file_name" ]; 
-        then           
+        if [ -f "$dst_dir/$file_name" ]; then           
             dst_file="$dst_dir/$file_name"
-            if compare_data "$src_file" "$dst_file" ; 
-            then #executa quando retornar 0
+            if compare_data "$src_file" "$dst_file" ; then #executa quando retornar 0
                 echo "substitui"
                 ((updated++))
                 simulation cp -a "$src_file" "$dst_file" #substitui o ficheiro 2 com o 1
             fi
         else
         echo "criei"
-        ((copied+=1))
+            ((copied+=1))
             size "c$src_file"   #este c serve para distinguir entre delete e copy na função
             simulation cp -a "$src_file" "$dst_dir" 
         fi
     
     done
 
- #analisar files de backup->fonte
     
     
     return 0

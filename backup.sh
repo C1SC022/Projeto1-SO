@@ -36,13 +36,15 @@ function main(){
     check_arg_path
 
     backup_folder="$dst_dir/backup"
-    if check_backup_existence ; 
+    if check_existence "$backup_folder"; 
     then
         echo "o check funciona"
-        do_initial_backup "$backup_folder"
+        make_directory "$dst_dir" "backup"
+        compare "$backup_folder" "$src_dir"
     else
         echo "o backup existe"
         compare "$backup_folder" "$src_dir"
+        delete "$src_dir" "$backup_folder"
     fi
 }
 
@@ -80,10 +82,10 @@ function check_arg_path()
 
 }
 
-function check_backup_existence()
+function check_existence()
 {
-
-    if [ -d "$dst_dir/backup" ];
+    dir=$1
+    if [ -d "$dir" ];
     then
         return 1;
     fi
@@ -91,15 +93,19 @@ function check_backup_existence()
     return 0;
 }
 
+function make_directory(){
+    dst_dir=$1
+    dir_name=$2
 
-function do_initial_backup()
-{
-    new_folder=$1
-    simulation mkdir -p "$new_folder"
-    
-    compare "$new_folder" "$src_dir"  #estavasse a duplicar e nao a ler cada file, nao era o suposto duplicar
-    exit 0
+    new_dir="$dst_dir/$dir_name"
+
+
+    if   check_existence "$new_dir"; then
+        simulation mkdir -p "$new_dir" 
+    fi
+
 }
+
 
 #flag -b
 function exclude()
@@ -107,7 +113,9 @@ function exclude()
         
     #ja funciona, aqui o problema era o file excluir vir do windows, por isso nao
     #estava no formato certo
+    IFS=$'\n'
     for line in $(cat "$exclude_file"); do
+    unset IFS
         line="${line//$'\r'/}" #tira o \r do formato do windows
         if [[ "$1" == "$line" ]]; then
             return 0
@@ -146,54 +154,54 @@ function compare_data()
     fi
 }
 
-function make_directory(){
-    dst_dir=$1
-    dir_name=$2
-    new_dir="$dst_dir/$dir_name"
 
-    simulation mkdir -p "$new_dir" 
-   
-
-}
 function delete(){
     src_dir=$1
     dst_dir=$2
-     echo "$src_dir"
-     echo "$dst_dir"
+    IFS=$'\n'
     for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
+    unset IFS
         file_name=$(basename "$file")
-        if [ -z "$(ls -A "$dst_dir")" ]; then
-            continue
+
+        if [[ -d "$file" ]] && [ ! -z "$(ls -A "$file")" ] && [ -d "$src_dir/$file_name" ]; then
+            new_dir="$dst_dir/$file_name"
+            if delete "$src_dir/$file_name" "$new_dir" ; then
+                # Reset directory variables after recursive call
+                src_dir="$1"
+                dst_dir="$2"
+                continue
+            fi
         fi
 
-        echo "$dst_dir/$file_name"
-        echo "$src_dir/$file_name"
-        echo "$file"
-        if [ -d "$dst_dir/$file_name" ] && [ ! -d "$src_dir/$file_name" ]; then
+
+        if [[ -d "$dst_dir/$file_name" && ! -d "$src_dir/$file_name" ]]; then
             echo "Removendo a $file_name do $dst_dir, não existe em $src_dir"
             simulation rm -r "$file"
-        elif [ ! -f "$src_dir/$file_name" ] && [ -f "$dst_dir/$file_name" ]; 
-        then
+        elif [[ ! -f "$src_dir/$file_name" && -f "$dst_dir/$file_name" ]]; then
+        
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
             simulation rm "$file" 
         fi
        
     done
+    return 0
 }
 function compare()
 {
     dst_dir=$1
     src_dir=$2
-    
-    #analisar files de fonte->backup
-    find "$src_dir" -mindepth 1 -maxdepth 1 | while IFS= read -r file; do
-        file_name=$(basename "$file")
-        echo "filename: $file_name"
+    IFS=$'\n'
+    # Skip processing if the source directory is empty
 
-        # Skip processing if the source directory is empty
-        if [ -z "$(ls -A "$src_dir")" ]; then
-            continue
-        fi
+    if [ -z "$(ls -A "$src_dir")" ]; then
+        
+            return 0
+    fi
+    #analisar files de fonte->backup
+    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
+    unset IFS
+        file_name=$(basename "$file")
+
 
         # Handle directories recursively
         if [[ -d "$file" ]]; then
@@ -201,8 +209,8 @@ function compare()
             new_dir="$dst_dir/$file_name"
             if compare "$new_dir" "$src_dir/$file_name"; then
                 # Reset directory variables after recursive call
-                dst_dir=$1
-                src_dir=$2
+                dst_dir="$1"
+                src_dir="$2"
                 continue
             fi
         fi
@@ -234,8 +242,6 @@ function compare()
 
     done
 
- #analisar files de backup->fonte
-    delete "$src_dir" "$dst_dir"
     
     return 0
 }
