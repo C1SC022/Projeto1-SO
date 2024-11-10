@@ -31,6 +31,7 @@ function main(){
     else
         echo "o backup existe"
         compare "$backup_folder"
+        delete "$src_dir" "$backup_folder"
     fi
 }
 
@@ -114,7 +115,9 @@ function delete(){
     src_dir=$1
     dst_dir=$2
 
+    IFS=$'\n'
     for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
+    unset IFS
         file_name=$(basename "$file")
 
         
@@ -130,9 +133,10 @@ function delete(){
 function compare()
 {
     dst_dir=$1
-
+    IFS=$'\n'
     #analisar files de fonte->backup
     for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
+    unset IFS
         if [[ ! -f "$file" ]]; then
             continue
         fi
@@ -159,8 +163,7 @@ function compare()
 
     done
 
- #analisar files de backup->fonte
-    delete "$src_dir" "$dst_dir"
+ 
     
 }
 
