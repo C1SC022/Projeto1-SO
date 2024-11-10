@@ -133,13 +133,17 @@ function compare_data()
     src_file=$1
     dst_file=$2
 
-    if [ "$src_file" -nt "$dst_file" ]; 
+    if [  "$src_file" -nt "$dst_file" ];
     then
         echo "source mais novo"
         return 0;
+    elif [  "$dst_file" -nt "$src_file" ] ; then
+        echo "backup mais novo"
+        return 1
+    else
+    echo "iguais"
+    return 1
     fi
-    echo "backup mais novo"
-    return 1;
 }
 
 function make_directory(){
@@ -154,14 +158,17 @@ function make_directory(){
 function delete(){
     src_dir=$1
     dst_dir=$2
-
+     echo "$src_dir"
+     echo "$dst_dir"
     for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
         file_name=$(basename "$file")
         if [ -z "$(ls -A "$dst_dir")" ]; then
             continue
         fi
 
-        
+        echo "$dst_dir/$file_name"
+        echo "$src_dir/$file_name"
+        echo "$file"
         if [ -d "$dst_dir/$file_name" ] && [ ! -d "$src_dir/$file_name" ]; then
             echo "Removendo a $file_name do $dst_dir, não existe em $src_dir"
             simulation rm -r "$file"

@@ -97,13 +97,17 @@ function compare_data()
     src_file=$1
     dst_file=$2
 
-    if [ "$src_file" -nt "$dst_file" ]; 
+    if [  "$src_file" -nt "$dst_file" ];
     then
         echo "source mais novo"
         return 0;
+    elif [  "$dst_file" -nt "$src_file" ] ; then
+        echo "backup mais novo"
+        return 1
+    else
+    echo "iguais"
+    return 1
     fi
-    echo "backup mais novo"
-    return 1;
 }
 
 function delete(){
