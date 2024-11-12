@@ -15,8 +15,9 @@ deleted_size=0
 
 
 function main(){
-    #nao consegui por isto numa função a parte
-    while getopts ":cb:r:" opt; do
+    
+    while getopts ":cb:r:" opt; 
+    do
         case ${opt} in 
             c)
                 checking=true
@@ -33,6 +34,7 @@ function main(){
             \?)
                 echo "Invalid option"
                 ((errors++))
+                echo -e "\033[31mERROR: the option $1 is an invalid option; Should not happen\033[0m"
                 summary
                 ;;
         esac
@@ -47,14 +49,14 @@ function main(){
 
     backup_folder="$dst_dir/backup"
 
-    if check_existence "$backup_folder"; 
+    if ! check_dir_existence "$backup_folder"; 
     then
         echo "o check funciona"
-        make_directory "$dst_dir" "backup"
+        create_directory "$dst_dir" "backup"
         compare "$backup_folder" "$src_dir"
     else
         ((warnings+=1))
-        echo "o backup existe"
+        echo -e "\033[33mWARNING: backup entry $backup_folder already exist; Should not happen\033[0m"
         compare "$backup_folder" "$src_dir"
         delete "$src_dir" "$backup_folder"
     fi
@@ -63,7 +65,7 @@ function main(){
 function size(){
     arg=$1
     file="${arg#?}"
-    if [ -f "$file" ]; then
+    if check_file_existence "$file"; then
         size=$(du -sb "$file" | cut -f1)
     elif [ ! -z "$(ls -A "$file")" ]; then
         size=$(find "$file" -type f -exec stat --format="%s" {} + | awk '{s+=$1} END {print s}')
@@ -72,14 +74,12 @@ function size(){
     if [[ "$arg" == c* ]]; then     #c para copy
         ((copied_size=$copied_size + $size))
     elif [[ "$arg" == d* ]] && [ ! -z "$(ls -A "$file")" ]; then   #d para delete
-        ((deleted_size=$copied_size + $size))
+        ((deleted_size=$deleted_size + $size))
     fi
 
 
 }
-#function warning(){
-    #ainda nao sei
-#}
+
 function summary(){
 
     echo "$errors Errors; $warnings Warnings; $updated Updated; $copied Copied ($copied_size B); $deleted Deleted ($deleted_size B)"
@@ -102,8 +102,9 @@ function check_arg_amt()
     
     if [ $# != 2 ]; 
     then
-        echo -e "\033[31mThe number of arguments is wrong.\033[0m"
         ((errors++))
+        echo -e "\033[31mERROR: the number of arguments is wrong; Should not happen\033[0m"
+
         summary
     fi
 
@@ -113,34 +114,42 @@ function check_arg_amt()
 #checkar se os diretórios dados sao válidos
 function check_arg_path()
 {
-    if [ ! -d "$src_dir" ] || [ ! -d "$dst_dir" ]; 
+    if  ! check_dir_existence "$src_dir" ||  ! check_dir_existence "$dst_dir"; 
     then 
-         echo -e "\033[31mThe directories inputed do not exist.\033[0m"
          ((errors++))
+        echo -e "\033[31mERROR: the directories inputed do not exist; Should not happen\033[0m"
          summary
     fi
 
 }
 
-function check_existence()
+function check_dir_existence()
 {
-    dir=$1
-    if [ -d "$dir" ];
+    if [ -d "$1" ];
     then
-        return 1;
+        return 0;
     fi
 
-    return 0;
+    return 1;
+}
+function check_file_existence()
+{
+    if [ -f "$1" ];
+    then
+        return 0;
+    fi
+
+    return 1;
 }
 
-function make_directory(){
+function create_directory(){
     dst_dir=$1
     dir_name=$2
 
     new_dir="$dst_dir/$dir_name"
 
 
-    if   check_existence "$new_dir"; then
+    if  ! check_dir_existence "$new_dir"; then
         simulation mkdir -p "$new_dir" 
     fi
 
@@ -153,7 +162,7 @@ function exclude()
     #estava no formato certo
     IFS=$'\n'
     for line in $(cat "$exclude_file"); do
-    unset IFS
+        unset IFS
         line="${line//$'\r'/}" #tira o \r do formato do windows
         if [[ "$1" == "$line" ]]; then
             return 0
@@ -186,8 +195,8 @@ function compare_data()
         return 0;
     elif [  "$dst_file" -nt "$src_file" ] ; then
         echo "backup mais novo"
+        echo -e "\033[33mWARNING: backup entry $dst_file is newer than $src_file; Should not happen\033[0m"
         ((warnings+=1))
-        #warning "$src_file" "$dst_file"
         return 1
     else
     echo "iguais"
@@ -208,7 +217,7 @@ function delete(){
         file_name=$(basename "$file")
 
         
-        if [[ -d "$file" ]] && [ ! -z "$(ls -A "$file")" ] && [ -d "$src_dir/$file_name" ]; then #pus mais esta cena porque assim quando a pasta ja nao existir mas ela tem coisa la dentro nem seuqer tenta analisar os ficheiro e so da skip e elimina, o erro que estava a dar era q cagava se a pasta existia e depois apagava os ficheiros dentro e depois nao apagava a pasta, e so quando voltavas a executar o codigo é que funcionava
+        if  check_dir_existence "$file"  && [ ! -z "$(ls -A "$file")" ] &&  check_dir_existence "$src_dir/$file_name" ; then #pus mais esta cena porque assim quando a pasta ja nao existir mas ela tem coisa la dentro nem seuqer tenta analisar os ficheiro e so da skip e elimina, o erro que estava a dar era q cagava se a pasta existia e depois apagava os ficheiros dentro e depois nao apagava a pasta, e so quando voltavas a executar o codigo é que funcionava
         #nao sei se a por aquilo posso tirar do debaixo, pq agora parece algo redundante pq ele ja vai para baixo se nao existir por isso é so eliminar
         #!! tentei por um else aqui para eliminar logo, continua redundante pq tinha que por as duas condições aqui em cima
         #e depois ficava mais confuso, pelo menos assim esta separado, isto serve para entrar na recursiva e outro para eliminar
@@ -221,7 +230,7 @@ function delete(){
             fi
         fi
 
-        if [[ -d "$dst_dir/$file_name" && ! -d "$src_dir/$file_name" ]]; then
+        if  check_dir_existence "$dst_dir/$file_name" && ! check_dir_existence "$src_dir/$file_name" ; then
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
             num_files=$(find "$file" -type f | wc -l)
             ((deleted += num_files))
@@ -229,7 +238,7 @@ function delete(){
             simulation rm -r "$file"
 
         # Checa e remove arquivos que existem apenas em dst_dir
-        elif [[ ! -f "$src_dir/$file_name" && -f "$dst_dir/$file_name" ]]; then
+        elif  ! check_file_existence "$src_dir/$file_name" && check_file_existence "$dst_dir/$file_name" ; then
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
             ((deleted++))
             size "d$file"   # Marcação de delete para a função size
@@ -251,15 +260,15 @@ function compare()
             return 0
     fi
     #analisar files de fonte->backup
-    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
-    unset IFS
-        file_name=$(basename "$file")
+    for src_file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
+        unset IFS
+        file_name=$(basename "$src_file")
     
         
 
         # Handle directories recursively
-        if [[ -d "$file" ]]; then
-            make_directory "$dst_dir" "$file_name"
+        if  check_dir_existence "$src_file" ; then
+            create_directory "$dst_dir" "$file_name"
             new_dir="$dst_dir/$file_name"
             if compare "$new_dir" "$src_dir/$file_name"; then
                 # Reset directory variables after recursive call
@@ -279,10 +288,10 @@ function compare()
             continue
         fi
 
-        src_file="$src_dir/$file_name"
         
         
-        if [ -f "$dst_dir/$file_name" ]; then           
+        
+        if  check_file_existence "$dst_dir/$file_name" ; then           
             dst_file="$dst_dir/$file_name"
             if compare_data "$src_file" "$dst_file" ; then #executa quando retornar 0
                 echo "substitui"
