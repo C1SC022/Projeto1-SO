@@ -36,10 +36,10 @@ function main(){
     check_arg_path
 
     backup_folder="$dst_dir/backup"
-    if check_existence "$backup_folder"; 
+    if ! check_dir_existence "$backup_folder"; 
     then
         echo "o check funciona"
-        make_directory "$dst_dir" "backup"
+        create_directory "$dst_dir" "backup"
         compare "$backup_folder" "$src_dir"
     else
         echo "o backup existe"
@@ -74,7 +74,7 @@ function check_arg_amt()
 #checkar se os diretórios dados sao válidos
 function check_arg_path()
 {
-    if [ ! -d "$src_dir" ] || [ ! -d "$dst_dir" ]; 
+    if  ! check_dir_existence "$src_dir"  ||  ! check_dir_existence "$dst_dir" ; 
     then 
          echo -e "\033[31mThe directories inputed do not exist.\033[0m"
          exit 1
@@ -82,25 +82,33 @@ function check_arg_path()
 
 }
 
-function check_existence()
+function check_dir_existence()
 {
-    dir=$1
-    if [ -d "$dir" ];
+    if [ -d "$1" ];
     then
-        return 1;
+        return 0;
     fi
 
-    return 0;
+    return 1;
+}
+function check_file_existence()
+{
+    if [ -f "$1" ];
+    then
+        return 0;
+    fi
+
+    return 1;
 }
 
-function make_directory(){
+function create_directory(){
     dst_dir=$1
     dir_name=$2
 
     new_dir="$dst_dir/$dir_name"
 
 
-    if   check_existence "$new_dir"; then
+    if  ! check_dir_existence "$new_dir"; then
         simulation mkdir -p "$new_dir" 
     fi
 
@@ -115,7 +123,7 @@ function exclude()
     #estava no formato certo
     IFS=$'\n'
     for line in $(cat "$exclude_file"); do
-    unset IFS
+        unset IFS
         line="${line//$'\r'/}" #tira o \r do formato do windows
         if [[ "$1" == "$line" ]]; then
             return 0
@@ -159,11 +167,11 @@ function delete(){
     src_dir=$1
     dst_dir=$2
     IFS=$'\n'
-    for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
-    unset IFS
-        file_name=$(basename "$file")
+    for dst_file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
+        unset IFS
+        file_name=$(basename "$dst_file")
 
-        if [[ -d "$file" ]] && [ ! -z "$(ls -A "$file")" ] && [ -d "$src_dir/$file_name" ]; then
+        if  check_dir_existence "$dst_file"  && [ ! -z "$(ls -A "$dst_file")" ] &&  check_dir_existence "$src_dir/$file_name" ; then
             new_dir="$dst_dir/$file_name"
             if delete "$src_dir/$file_name" "$new_dir" ; then
                 # Reset directory variables after recursive call
@@ -174,13 +182,13 @@ function delete(){
         fi
 
 
-        if [[ -d "$dst_dir/$file_name" && ! -d "$src_dir/$file_name" ]]; then
+        if  check_dir_existence "$dst_file" && ! check_dir_existence "$src_dir/$file_name" ; then
             echo "Removendo a $file_name do $dst_dir, não existe em $src_dir"
-            simulation rm -r "$file"
-        elif [[ ! -f "$src_dir/$file_name" && -f "$dst_dir/$file_name" ]]; then
+            simulation rm -r "$dst_file"
+        elif  ! check_file_existence "$src_dir/$file_name" && check_file_existence "$dst_file" ; then
         
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
-            simulation rm "$file" 
+            simulation rm "$dst_file" 
         fi
        
     done
@@ -198,14 +206,14 @@ function compare()
             return 0
     fi
     #analisar files de fonte->backup
-    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
+    for src_file in $(find "$src_dir" -mindepth 1 -maxdepth 1); do
     unset IFS
-        file_name=$(basename "$file")
+        file_name=$(basename "$src_file")
 
 
         # Handle directories recursively
-        if [[ -d "$file" ]]; then
-            make_directory "$dst_dir" "$file_name"
+        if  check_dir_existence "$src_file" ; then
+            create_directory "$dst_dir" "$file_name"
             new_dir="$dst_dir/$file_name"
             if compare "$new_dir" "$src_dir/$file_name"; then
                 # Reset directory variables after recursive call
@@ -225,11 +233,9 @@ function compare()
             continue
         fi
 
-        # Define source and destination paths
-        src_file="$src_dir/$file_name"
 
         # Check if the file already exists in the destination
-        if [ -f "$dst_dir/$file_name" ]; then
+        if  check_file_existence "$dst_dir/$file_name" ; then
             dst_file="$dst_dir/$file_name"
             if compare_data "$src_file" "$dst_file"; then
                 echo "substitui"

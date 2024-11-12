@@ -212,12 +212,12 @@ function delete(){
 
     IFS=$'\n'
 
-    for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
-    unset IFS
-        file_name=$(basename "$file")
+    for dst_file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); do
+        unset IFS
+        file_name=$(basename "$dst_file")
 
         
-        if  check_dir_existence "$file"  && [ ! -z "$(ls -A "$file")" ] &&  check_dir_existence "$src_dir/$file_name" ; then #pus mais esta cena porque assim quando a pasta ja nao existir mas ela tem coisa la dentro nem seuqer tenta analisar os ficheiro e so da skip e elimina, o erro que estava a dar era q cagava se a pasta existia e depois apagava os ficheiros dentro e depois nao apagava a pasta, e so quando voltavas a executar o codigo é que funcionava
+        if  check_dir_existence "$dst_file"  && [ ! -z "$(ls -A "$dst_file")" ] &&  check_dir_existence "$src_dir/$file_name" ; then #pus mais esta cena porque assim quando a pasta ja nao existir mas ela tem coisa la dentro nem seuqer tenta analisar os ficheiro e so da skip e elimina, o erro que estava a dar era q cagava se a pasta existia e depois apagava os ficheiros dentro e depois nao apagava a pasta, e so quando voltavas a executar o codigo é que funcionava
         #nao sei se a por aquilo posso tirar do debaixo, pq agora parece algo redundante pq ele ja vai para baixo se nao existir por isso é so eliminar
         #!! tentei por um else aqui para eliminar logo, continua redundante pq tinha que por as duas condições aqui em cima
         #e depois ficava mais confuso, pelo menos assim esta separado, isto serve para entrar na recursiva e outro para eliminar
@@ -230,19 +230,19 @@ function delete(){
             fi
         fi
 
-        if  check_dir_existence "$dst_dir/$file_name" && ! check_dir_existence "$src_dir/$file_name" ; then
+        if  check_dir_existence "$dst_file" && ! check_dir_existence "$src_dir/$file_name" ; then
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
-            num_files=$(find "$file" -type f | wc -l)
+            num_files=$(find "$dst_file" -type f | wc -l)
             ((deleted += num_files))
-            size "d$file"   # Marcação de delete para a função size
-            simulation rm -r "$file"
+            size "d$dst_file"   # Marcação de delete para a função size
+            simulation rm -r "$dst_file"
 
         # Checa e remove arquivos que existem apenas em dst_dir
-        elif  ! check_file_existence "$src_dir/$file_name" && check_file_existence "$dst_dir/$file_name" ; then
+        elif  ! check_file_existence "$src_dir/$file_name" && check_file_existence "$dst_file" ; then
             echo "Removendo $file_name do $dst_dir, não existe em $src_dir"
             ((deleted++))
-            size "d$file"   # Marcação de delete para a função size
-            simulation rm "$file"
+            size "d$dst_file"   # Marcação de delete para a função size
+            simulation rm "$dst_file"
         fi
        
     done

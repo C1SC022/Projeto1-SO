@@ -147,21 +147,18 @@ function compare()
         
         
 
-        src_file="$src_dir/$file_name"
-        
-        
         if [ -f "$dst_dir/$file_name" ]; 
         then
             
             dst_file="$dst_dir/$file_name"
-            if compare_data "$src_file" "$dst_file" ; 
+            if compare_data "$file" "$dst_file" ; 
             then #executa quando retornar 0
             echo "substitui"
-                simulation cp -a "$src_file" "$dst_file" #substitui o ficheiro 2 com o 1
+                simulation cp -a "$file" "$dst_file" #substitui o ficheiro 2 com o 1
             fi
         else
         echo "criei"
-            simulation cp -a "$src_file" "$dst_dir" 
+            simulation cp -a "$file" "$dst_dir" 
         fi
 
     done
