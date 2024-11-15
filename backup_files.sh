@@ -3,17 +3,13 @@ checking=false
 
 
 function main(){
-    #nao consegui por isto numa função a parte
-    while getopts ":cb:r:" opt; do
-        case ${opt} in 
-            c)
+    while getopts ":c" opt; do
+        if [ "$opt" = "c" ]; then 
                 checking=true
-                ;;
-            \?)
+        else
                 echo "Invalid option"
                 exit 1
-                ;;
-        esac
+        fi
     done
     shift $((OPTIND - 1))
     
