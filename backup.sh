@@ -38,17 +38,16 @@ function main(){
     # Check if the directories exist
     check_arg_path
 
-    # Assign the backup folder
-    backup_folder="$dst_dir/backup"
-    if ! check_dir_existence "$backup_folder"; 
+    
+    if ! check_dir_existence "$dst_dir"; 
     then
         # Create the backup directory
-        create_directory "$dst_dir" "backup"
-        compare "$backup_folder" "$src_dir"
+        create_directory "$dst_dir" 
+        compare "$dst_dir" "$src_dir"
     else
         # Compare then delete
-        compare "$backup_folder" "$src_dir"
-        delete "$src_dir" "$backup_folder"
+        compare "$dst_dir" "$src_dir"
+        delete "$src_dir" "$dst_dir"
     fi
 }
 
@@ -102,8 +101,9 @@ function check_arg_amt()
 
 function check_arg_path()
 {
-    # Check if the directories exist
-    if  ! check_dir_existence "$src_dir"  ||  ! check_dir_existence "$dst_dir" ; 
+    dir_name=$(dirname "$dst_dir")
+    # Check if the directories exist and if the path before the backup directory exists
+    if  ! check_dir_existence "$src_dir" ||  ! check_dir_existence "$dir_name"; 
     then 
          echo -e "\033[31mThe directories inputed do not exist.\033[0m"
          exit 1

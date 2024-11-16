@@ -13,6 +13,7 @@ copied=0
 copied_size=0
 deleted=0
 deleted_size=0
+summary_list=(0 0 0 0 0 0 0)
 
 function main()
 {
@@ -35,6 +36,7 @@ function main()
                 ((errors++))
                 echo -e "\033[31mERROR: the option $1 is an invalid option; Should not happen\033[0m"
                 summary
+                exit 1
                 ;;
         esac
     done
@@ -45,26 +47,23 @@ function main()
     # Assign the arguments to the variables
     src_dir="$1"
     dst_dir="$2"
-    
+
     # Check if the directories exist
     check_arg_path
-
-    # Assign the backup folder
-    backup_folder="$dst_dir/backup"
-    if ! check_dir_existence "$backup_folder"; 
+    
+    if ! check_dir_existence "$dst_dir"; 
     then
         # Create the backup directory
-        create_directory "$dst_dir" "backup"
-        compare "$backup_folder" "$src_dir"
+        create_directory "$dst_dir"
+        compare "$dst_dir" "$src_dir"
     else
         # Compare then delete
-        ((warnings+=1))
-        echo -e "\033[33mWARNING: backup entry $backup_folder already exist; Should not happen\033[0m"
-        compare "$backup_folder" "$src_dir"
-        delete "$src_dir" "$backup_folder"
+        ((warnings++))
+        echo -e "\033[33mWARNING: backup entry $dst_dir already exist; Should not happen\033[0m"
+        compare "$dst_dir" "$src_dir"
     fi
-    # Summary of the statistics
-    summary
+    # Summary of the general statistics
+    summary "list" "${list_summary[@]}"
 }
 
 function size()
@@ -94,11 +93,27 @@ function size()
     fi
 }
 
+function list_summary()
+{
+    # Update the general statistics
+    list_summary[0]=$((list_summary[0] + $errors))
+    list_summary[1]=$((list_summary[1] + $warnings))
+    list_summary[2]=$((list_summary[2] + $updated))
+    list_summary[3]=$((list_summary[3] + $copied))
+    list_summary[4]=$((list_summary[4] + $copied_size))
+    list_summary[5]=$((list_summary[5] + $deleted))
+    list_summary[6]=$((list_summary[6] + $deleted_size))
+}
 function summary()
 {
-    # Print the summary of the statistics
-    echo "$errors Errors; $warnings Warnings; $updated Updated; $copied Copied ($copied_size B); $deleted Deleted ($deleted_size B)"
-    exit
+ if [[ $1 == "list" ]]; then
+        shift # Remove the first argument
+        local sum_list=("$@") # Use the list arguments
+        echo -e "\033[32mWhile backuping general: ${sum_list[0]} Errors; ${sum_list[1]} Warnings; ${sum_list[2]} Updated; ${sum_list[3]} Copied (${sum_list[4]} B); ${sum_list[5]} Deleted (${sum_list[6]} B)\033[0m"
+    else
+        # Use the directory statistics
+        echo -e "\033[32mWhile backuping $1: $errors Errors; $warnings Warnings; $updated Updated; $copied Copied ($copied_size B); $deleted Deleted ($deleted_size B)\033[0m"
+    fi
 }
 
 # Parameter -c
@@ -120,17 +135,20 @@ function check_arg_amt()
         ((errors++))
         echo -e "\033[31mERROR: the number of arguments is wrong; Should not happen\033[0m"
         summary
+        exit 1
     fi
 }
 
 function check_arg_path()
 {
-    # Check if the directories exist
-    if  ! check_dir_existence "$src_dir" ||  ! check_dir_existence "$dst_dir"; 
+    dir_name=$(dirname "$dst_dir")
+    # Check if the directories exist and if the path before the backup directory exists
+    if  ! check_dir_existence "$src_dir" ||  ! check_dir_existence "$dir_name"; 
     then 
         ((errors++))
         echo -e "\033[31mERROR: the directories inputed do not exist; Should not happen\033[0m"
         summary
+        exit 1
     fi
 }
 
@@ -206,7 +224,7 @@ function compare_data()
     then
         # The destination file is newer
         echo -e "\033[33mWARNING: backup entry $dst_file is newer than $src_file; Should not happen\033[0m"
-        ((warnings+=1))
+        ((warnings++1))
         return 1
     else
     # The files have the same modification date
@@ -227,18 +245,6 @@ function delete()
         unset IFS
         file_name=$(basename "$dst_file")
 
-        # Handle directories recursively
-        if  check_dir_existence "$dst_file"  && [ ! -z "$(ls -A "$dst_file")" ] &&  check_dir_existence "$src_dir/$file_name" ; 
-        then 
-            new_dir="$dst_dir/$file_name"
-            if delete "$src_dir/$file_name" "$new_dir" ; 
-            then
-                # Reset directory variables after recursive call
-                src_dir="$1"
-                dst_dir="$2"
-                continue
-            fi
-        fi
 
         # If the directory does not exist in the source, delete it
         if  check_dir_existence "$dst_file" && ! check_dir_existence "$src_dir/$file_name" ; 
@@ -257,7 +263,6 @@ function delete()
             simulation rm "$dst_file"
         fi
     done
-    return 0
 }
 function compare()
 {
@@ -266,31 +271,20 @@ function compare()
     src_dir=$2
     IFS=$'\n'
 
+
     # In recursive calls, check if the source directory is empty to skip processing
     if [ -z "$(ls -A "$src_dir")" ]; 
     then
+        summary $src_dir
         return 0
     fi
 
-    for src_file in $(find "$src_dir" -mindepth 1 -maxdepth 1); 
+    # Loop through the files in the source directory
+    for src_file in $(find "$src_dir" -mindepth 1 -maxdepth 1 -type f); 
     do
         unset IFS
         file_name=$(basename "$src_file")
-
-        # Handle directories recursively, create or enter the new directory
-        if  check_dir_existence "$src_file" ; 
-        then
-            create_directory "$dst_dir" "$file_name"
-            new_dir="$dst_dir/$file_name"
-            if compare "$new_dir" "$src_dir/$file_name"; 
-            then
-                # Reset directory variables after recursive call
-                dst_dir="$1"
-                src_dir="$2"
-                continue
-            fi
-        fi
-        
+       
         # Check for excluded files
         if [[ "$exclude_check" == true ]] && exclude "$file_name"; 
         then
@@ -321,6 +315,48 @@ function compare()
             simulation cp -a "$src_file" "$dst_dir" 
         fi
     done  
+
+    # Call the delete function to delete the files that are not in the source directory
+    if check_dir_existence "$dst_dir"; 
+    then
+        delete "$src_dir" "$dst_dir"
+    fi
+    # Update the general statistics
+    list_summary
+    # Call the summary function to display the statistics
+    summary $src_dir
+
+    IFS=$'\n'
+    # Loop through the directories in the source directory
+    for src_file in $(find "$src_dir" -mindepth 1 -maxdepth 1 -type d);
+    do
+        # Reset statistics
+        errors=0
+        warnings=0
+        updated=0
+        copied=0
+        copied_size=0
+        deleted=0
+        deleted_size=0
+        
+        unset IFS
+        file_name=$(basename "$src_file")
+
+        # Handle directories recursively, create or enter the new directory
+        if  check_dir_existence "$src_file" ; 
+        then
+            create_directory "$dst_dir" "$file_name"
+            new_dir="$dst_dir/$file_name"
+            if compare "$new_dir" "$src_dir/$file_name"; 
+            then
+                # Reset directory variables after recursive call
+                dst_dir="$1"
+                src_dir="$2"
+                continue
+            fi
+        fi
+    done
+    
     # Return 0 in order to go back to the previous directory   
     return 0
 }

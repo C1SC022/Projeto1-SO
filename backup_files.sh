@@ -24,16 +24,14 @@ function main(){
     # Check if the directories exist
     check_arg_path
 
-    # Assign the backup folder
-    backup_folder="$dst_dir/backup"
     if check_backup_existence ; 
     then
         # Create backup directory
-        do_initial_backup "$backup_folder"
+        do_initial_backup "$dst_dir"
     else
         # Compare then delete
-        compare "$backup_folder"
-        delete "$src_dir" "$backup_folder"
+        compare 
+        delete 
     fi
 }
 
@@ -60,8 +58,10 @@ function check_arg_amt()
 
 function check_arg_path()
 {
-    # Check if the directories exist
-    if [ ! -d "$src_dir" ] || [ ! -d "$dst_dir" ]; 
+    dir_name=$(dirname "$dst_dir")
+
+    # Check if the directories exist and if the path before the backup directory exists
+    if [ ! -d "$src_dir" ] || [ ! -d "$dir_name" ]; 
     then 
          echo -e "\033[31mThe directories inputed do not exist.\033[0m"
          exit 1
@@ -71,7 +71,7 @@ function check_arg_path()
 function check_backup_existence()
 {
     # Check if the backup directory exists
-    if [ -d "$dst_dir/backup" ];
+    if [ -d "$dst_dir" ];
     then
         return 1;
     fi
@@ -112,8 +112,6 @@ function compare_data()
 function delete()
 {
     # Delete the files that are not in the source directory
-    src_dir=$1
-    dst_dir=$2
     IFS=$'\n'
 
     # Analyze files from backup
@@ -138,7 +136,6 @@ function delete()
 function compare()
 {
     # Compare the files from the source directory to the backup directory
-    dst_dir=$1
     IFS=$'\n'
 
     for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); 
