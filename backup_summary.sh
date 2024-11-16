@@ -105,11 +105,11 @@ function summary()
 function simulation()
 {
     # Write the command to be executed if the checking variable is true
-    if $checking; then
-        echo "$*"
-    else
+    if ! $checking; 
+    then
         "$@"
     fi
+    echo "$*"
 }
 
 function check_arg_amt()

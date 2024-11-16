@@ -56,12 +56,11 @@ function main(){
 function simulation()
 {
     # Write the command to be executed if the checking variable is true
-    if $checking; 
+    if ! $checking; 
     then
-        echo "$*"
-    else
         "$@"
     fi
+    echo "$*"
 }
 
 # Parameter -b
