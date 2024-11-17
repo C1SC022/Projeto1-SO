@@ -7,7 +7,7 @@ rm -rf backup_test
 cp -r -a backup_$testName backup_test
 
 #test results
-./backup.sh src backup_test > output.txt 2> err.txt
+./backup_summary.sh src backup_test > output.txt 2> err.txt
 # Ver o conteúdo gerado na saída padrão
 echo "Conteúdo de output.txt (saída padrão):"
 cat output.txt

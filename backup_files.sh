@@ -1,6 +1,9 @@
 # Declaration of global variables
 checking=false
 
+default_dirname_src=""
+default_dirname_dst=""
+
 function main(){
     # Check the existence of the "c" parameter
     while getopts ":c" opt; 
@@ -24,6 +27,9 @@ function main(){
     # Check if the directories exist
     check_arg_path
 
+    default_dirname_src=$(dirname "$src_dir")
+    default_dirname_dst=$(dirname "$dst_dir")
+
     if check_backup_existence ; 
     then
         # Create backup directory
@@ -43,7 +49,20 @@ function simulation()
     then
         "$@"
     fi
-    echo "$*"
+   
+    for i in "$@"; do
+        if [[ "$i" =~ "$default_dirname_src" ]]; then
+            echo -n "${i/"$default_dirname_src/"}"
+        elif [[ "$i" =~ "$default_dirname_dst" ]]; then
+            echo -n "${i/"$default_dirname_dst/"}"
+        else
+            echo -n "$i"
+        fi
+        if [[ "$i" != "${@: -1}" ]]; then
+            echo -n " "
+        fi
+    done
+    echo
 }
 
 function check_arg_amt()

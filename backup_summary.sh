@@ -5,6 +5,9 @@ exclude_check=false
 exclude_file=""
 regexpr=""
 regexpr_check=false
+
+default_dirname_src=""
+default_dirname_dst=""
 # Statistics
 errors=0
 warnings=0
@@ -51,6 +54,9 @@ function main()
     # Check if the directories exist
     check_arg_path
     
+    default_dirname_src=$(dirname "$src_dir")
+    default_dirname_dst=$(dirname "$dst_dir")
+
     if ! check_dir_existence "$dst_dir"; 
     then
         # Create the backup directory
@@ -112,7 +118,7 @@ function summary()
         echo -e "\033[32mWhile backuping general: ${sum_list[0]} Errors; ${sum_list[1]} Warnings; ${sum_list[2]} Updated; ${sum_list[3]} Copied (${sum_list[4]} B); ${sum_list[5]} Deleted (${sum_list[6]} B)\033[0m"
     else
         # Use the directory statistics
-        echo -e "\033[32mWhile backuping $1: $errors Errors; $warnings Warnings; $updated Updated; $copied Copied ($copied_size B); $deleted Deleted ($deleted_size B)\033[0m"
+        echo -e "\033[32mWhile backuping ${1/"$default_dirname_src/"}: $errors Errors; $warnings Warnings; $updated Updated; $copied Copied (${copied_size}B); $deleted Deleted (${deleted_size}B)\033[0m"
     fi
 }
 
@@ -124,7 +130,20 @@ function simulation()
     then
         "$@"
     fi
-    echo "$*"
+   
+    for i in "$@"; do
+        if [[ "$i" =~ "$default_dirname_src" ]]; then
+            echo -n "${i/"$default_dirname_src/"}"
+        elif [[ "$i" =~ "$default_dirname_dst" ]]; then
+            echo -n "${i/"$default_dirname_dst/"}"
+        else
+            echo -n "$i"
+        fi
+        if [[ "$i" != "${@: -1}" ]]; then
+            echo -n " "
+        fi
+    done
+    echo
 }
 
 function check_arg_amt()
