@@ -135,14 +135,10 @@ function delete()
     IFS=$'\n'
 
     # Analyze files from backup
-    for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1); 
+    for file in $(find "$dst_dir" -mindepth 1 -maxdepth 1 -type f); 
     do
-    unset IFS
-        # Check if it's a file
-        if [[ ! -f "$file" ]]; 
-        then
-            continue
-        fi
+        unset IFS
+        
         file_name=$(basename "$file")
 
         # If the file does not exist in the source directory, delete it
@@ -158,14 +154,9 @@ function compare()
     # Compare the files from the source directory to the backup directory
     IFS=$'\n'
 
-    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1); 
+    for file in $(find "$src_dir" -mindepth 1 -maxdepth 1 -type f); 
     do
         unset IFS
-        # Check if it's a file
-        if [[ ! -f "$file" ]]; 
-        then
-            continue
-        fi
 
         file_name=$(basename "$file")
 
