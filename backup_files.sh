@@ -50,6 +50,7 @@ function simulation()
         "$@"
     fi
    
+    # Compare the default directory names and remove them from the output
     for i in "$@"; do
         if [[ "$i" =~ "$default_dirname_src" ]]; then
             echo -n "${i/"$default_dirname_src/"}"

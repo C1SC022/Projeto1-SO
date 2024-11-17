@@ -63,9 +63,7 @@ function main()
         create_directory "$dst_dir"
         compare "$dst_dir" "$src_dir"
     else
-        # Compare then delete
-        ((warnings++))
-        echo -e "\033[33mWARNING: backup entry $dst_dir already exist; Should not happen\033[0m"
+        # Compare and delete
         compare "$dst_dir" "$src_dir"
     fi
     # Summary of the general statistics
@@ -130,7 +128,8 @@ function simulation()
     then
         "$@"
     fi
-   
+    
+    # Compare the default directory names and remove them from the output
     for i in "$@"; do
         if [[ "$i" =~ "$default_dirname_src" ]]; then
             echo -n "${i/"$default_dirname_src/"}"
