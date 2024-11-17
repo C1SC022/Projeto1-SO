@@ -8,19 +8,29 @@ cp -r -a backup_$testName backup_test
 
 #test results
 ./backup.sh src backup_test > output.txt 2> err.txt
+# Ver o conteúdo gerado na saída padrão
+echo "Conteúdo de output.txt (saída padrão):"
+cat output.txt
+
+# Ver o conteúdo gerado na saída de erro
+echo "Conteúdo de err.txt (saída de erro):"
+cat err.txt
 
 nlinesout=$(wc -l ${testName}.out | cut -d\  -f1)
 
 #test results
 # correct in head 
-if cat output.txt   | grep . | head -${nlinesout} | tr -s ' ' | sort | diff - ${testName}.out > /dev/null
+if cat output.txt | grep . | head -${nlinesout} | tr -s ' ' | sort | diff - ${testName}.out > /dev/null
 then
+    
     score=$((score+60))
 # correct in tail 
 elif cat output.txt | grep . | tail -${nlinesout} | tr -s ' ' | sort | diff - ${testName}.out > /dev/null
 then
+ 
     score=$((score+60))
 fi
+ 
 
 if [[ "$(ls -l backup_test)" == $(ls -l src) ]]
 then

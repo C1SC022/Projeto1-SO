@@ -149,11 +149,12 @@ function compare()
 
         file_name=$(basename "$file")
 
+        dst_file="$dst_dir/$file_name"
         # Check if the file exists in the backup directory
-        if [ -f "$dst_dir/$file_name" ]; 
+        if [ -f "$dst_file" ]; 
         then
             # If the file exists, compare the modification date
-            dst_file="$dst_dir/$file_name"
+            
             if compare_data "$file" "$dst_file" ; 
             then 
                 # If the source file is newer, replace the backup file
@@ -161,7 +162,7 @@ function compare()
             fi
         else
             # If the file does not exist, create it
-            simulation cp -a "$file" "$dst_dir" 
+            simulation cp -a "$file" "$dst_file" 
         fi
     done
 }

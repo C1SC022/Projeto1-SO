@@ -297,11 +297,11 @@ function compare()
             continue
         fi
 
+        dst_file="$dst_dir/$file_name"
         # Check if the file exists in the destination directory
-        if  check_file_existence "$dst_dir/$file_name" ; 
+        if  check_file_existence "$dst_file"; 
         then           
             # If the file exists, compare the modification date
-            dst_file="$dst_dir/$file_name"
             if compare_data "$src_file" "$dst_file" ; 
             then 
                 # If the source file is newer, replace the destination file and update the statistics
@@ -312,7 +312,7 @@ function compare()
             # If the file does not exist, create it and update the statistics
             ((copied++))
             size "c$src_file"  
-            simulation cp -a "$src_file" "$dst_dir" 
+            simulation cp -a "$src_file" "$dst_file" 
         fi
     done  
 

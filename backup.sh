@@ -5,6 +5,8 @@ exclude_file=""
 regexpr=""
 regexpr_check=false
 
+default_dirname_src=""
+default_dirname_dst=""
 function main(){
     # Check the existence of the parameters (-c, -b, -r)
     while getopts ":cb:r:" opt; 
@@ -38,6 +40,8 @@ function main(){
     # Check if the directories exist
     check_arg_path
 
+    default_dirname_src=$(dirname "$src_dir")
+    default_dirname_dst=$(dirname "$dst_dir")
     
     if ! check_dir_existence "$dst_dir"; 
     then
@@ -59,7 +63,21 @@ function simulation()
     then
         "$@"
     fi
-    echo "$*"
+   
+    for i in "$@"; do
+    
+        if [[ "$i" =~ "$default_dirname_src" ]]; 
+        then
+            echo -n "${i/"$default_dirname_src/"} "
+            continue
+        elif [[ "$i" =~ "$default_dirname_dst" ]]; 
+        then
+            echo -n "${i/"$default_dirname_dst/"} "
+            continue
+        fi
+        echo -n "$i "
+    done
+    echo
 }
 
 # Parameter -b
@@ -248,11 +266,12 @@ function compare()
             continue
         fi
 
+        dst_file="$dst_dir/$file_name"
+
         # Check if the file exists in the destination directory
-        if  check_file_existence "$dst_dir/$file_name" ; 
+        if  check_file_existence "$dst_file"; 
         then
             # If the file exists, compare the modification date
-            dst_file="$dst_dir/$file_name"
             if compare_data "$src_file" "$dst_file"; 
             then
                 # If the source file is newer, replace the destination file
@@ -260,7 +279,7 @@ function compare()
             fi
         else
             # If the file does not exist, create it
-            simulation cp -a "$src_file" "$dst_dir"
+            simulation cp -a "$src_file" "$dst_file"
         fi
     done
     # Return 0 in order to go back to the previous directory   
