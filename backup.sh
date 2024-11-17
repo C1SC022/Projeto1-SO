@@ -65,17 +65,16 @@ function simulation()
     fi
    
     for i in "$@"; do
-    
-        if [[ "$i" =~ "$default_dirname_src" ]]; 
-        then
-            echo -n "${i/"$default_dirname_src/"} "
-            continue
-        elif [[ "$i" =~ "$default_dirname_dst" ]]; 
-        then
-            echo -n "${i/"$default_dirname_dst/"} "
-            continue
+        if [[ "$i" =~ "$default_dirname_src" ]]; then
+            echo -n "${i/"$default_dirname_src/"}"
+        elif [[ "$i" =~ "$default_dirname_dst" ]]; then
+            echo -n "${i/"$default_dirname_dst/"}"
+        else
+            echo -n "$i"
         fi
-        echo -n "$i "
+        if [[ "$i" != "${@: -1}" ]]; then
+            echo -n " "
+        fi
     done
     echo
 }
