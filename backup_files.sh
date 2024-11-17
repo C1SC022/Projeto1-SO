@@ -109,7 +109,7 @@ function do_initial_backup()
     exit 0
 }
 
-function compare_data()
+function compare_date()
 {
     # Compare the modification date of the files
     src_file=$1
@@ -166,7 +166,7 @@ function compare()
         then
             # If the file exists, compare the modification date
             
-            if compare_data "$file" "$dst_file" ; 
+            if compare_date "$file" "$dst_file" ; 
             then 
                 # If the source file is newer, replace the backup file
                 simulation cp -a "$file" "$dst_file" 

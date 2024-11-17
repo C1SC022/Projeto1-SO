@@ -228,7 +228,7 @@ function choose()
 }
 
 
-function compare_data()
+function compare_date()
 {
     # Compare the modification date of the files
     src_file=$1
@@ -320,7 +320,7 @@ function compare()
         if  check_file_existence "$dst_file"; 
         then           
             # If the file exists, compare the modification date
-            if compare_data "$src_file" "$dst_file" ; 
+            if compare_date "$src_file" "$dst_file" ; 
             then 
                 # If the source file is newer, replace the destination file and update the statistics
                 ((updated++))
