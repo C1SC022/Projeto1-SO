@@ -7,18 +7,17 @@ function main()
     # Check if the source directory exists
     if ! check_directory_existence "$src_dir";
     then
-        echo -e "\033[31mA source directory doesn't exist.\033[0m"
+        echo "A source directory doesn't exist."
         exit
     fi
 
-    dst_dir="$dst_dir/backup"
     # Check if the backup directory indicated exists
     if  ! check_directory_existence "$dst_dir";
     then
-        echo -e "\033[31mA backup folder still doesn't exist in that directory.\033[0m"
+        echo "A backup folder still doesn't exist in that directory."
         exit # Exit's the script
     else
-        echo -e "The backup folder exists in the \033[33m$dst_dir\033[0m directory."
+        echo "The backup folder exists in the $dst_dir directory."
         
     fi
     check_backup_differences
@@ -37,8 +36,6 @@ function check_directory_existence()
 
 function check_backup_differences()
 {
-    # Indicate the start of the comparison
-    echo -e "\033[32mBeginning comparison...\033[0m"
 
     # Loop through the source files and check if they exist in the backup directory
     find "$src_dir" -type f | while IFS= read -r src_file; 
@@ -60,7 +57,7 @@ function check_backup_differences()
 
         if [ "$src_md5" != "$b_md5" ]; 
         then
-            echo -e "\033[33m$src_file\033[0m & \033[33m$b_file\033[0m differ."
+            echo "$src_file & $b_file differ."
         fi
     done
 
@@ -77,9 +74,6 @@ function check_backup_differences()
             echo "$filename exists in backup but not in source."
         fi
     done
-
-    # Indicate completion of the comparison
-    echo -e "\033[32mComparison complete\033[0m"
 
 }
 
