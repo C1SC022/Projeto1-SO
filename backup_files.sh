@@ -12,7 +12,6 @@ function main(){
         then 
                 checking=true
         else
-                echo "Invalid option"
                 exit 1
         fi
     done
@@ -71,7 +70,6 @@ function check_arg_amt()
     # Check if the number of arguments is different from 2
     if [ $# != 2 ]; 
     then
-        echo -e "\033[31mThe number of arguments is wrong.\033[0m"
         exit 1
     fi
 }
@@ -83,8 +81,7 @@ function check_arg_path()
     # Check if the directories exist and if the path before the backup directory exists
     if [ ! -d "$src_dir" ] || [ ! -d "$dir_name" ]; 
     then 
-         echo -e "\033[31mThe directories inputed do not exist.\033[0m"
-         exit 1
+        exit 1
     fi
 }
 
@@ -144,7 +141,9 @@ function delete()
         # If the file does not exist in the source directory, delete it
         if [ ! -f "$src_dir/$file_name" ]; 
         then
-            simulation rm "$file" 
+            if ! $checking;then
+                rm "$file" 
+            fi
         fi  
     done
 }

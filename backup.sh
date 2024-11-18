@@ -24,7 +24,6 @@ function main(){
                 regexpr="$OPTARG"
                 ;;
             \?)
-                echo "Invalid option"
                 exit 1
                 ;;
         esac
@@ -112,7 +111,6 @@ function check_arg_amt()
     # Check if the number of arguments is different from 2
     if [ $# != 2 ]; 
     then
-        echo -e "\033[31mThe number of arguments is wrong.\033[0m"
         exit 1
     fi
 }
@@ -123,7 +121,6 @@ function check_arg_path()
     # Check if the directories exist and if the path before the backup directory exists
     if  ! check_dir_existence "$src_dir" ||  ! check_dir_existence "$dir_name"; 
     then 
-         echo -e "\033[31mThe directories inputed do not exist.\033[0m"
          exit 1
     fi
 
@@ -212,11 +209,17 @@ function delete()
         # If the directory does not exist in the source, delete it
         if  check_dir_existence "$dst_file" && ! check_dir_existence "$src_dir/$file_name" ; 
         then
-            simulation rm -r "$dst_file"
+            if ! $checking; 
+            then
+                rm -r "$dst_file"
+            fi
         # If the file does not exist in the source, delete it
         elif  ! check_file_existence "$src_dir/$file_name" && check_file_existence "$dst_file" ; 
         then
-            simulation rm "$dst_file" 
+            if ! $checking;
+            then
+                rm "$dst_file" 
+            fi
         fi    
     done
     return 0
