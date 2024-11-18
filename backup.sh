@@ -159,7 +159,7 @@ function create_directory()
 
     if  ! check_dir_existence "$new_dir"; 
     then
-        simulation mkdir -p "$new_dir" 
+        simulation mkdir "$new_dir" 
     fi
 }
 

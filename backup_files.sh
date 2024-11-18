@@ -102,7 +102,7 @@ function do_initial_backup()
 {
     # Create the backup directory
     new_folder=$1
-    simulation mkdir -p "$new_folder"
+    simulation mkdir "$new_folder"
     
     # Copy the files from the source directory to the backup directory
     compare "$new_folder"   
