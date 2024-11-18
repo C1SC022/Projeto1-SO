@@ -16,7 +16,6 @@ copied=0
 copied_size=0
 deleted=0
 deleted_size=0
-summary_list=(0 0 0 0 0 0 0)
 
 function main()
 {
@@ -37,7 +36,7 @@ function main()
                 ;;
             \?)
                 ((errors++))
-                echo -e "\033[31mERROR: the option $1 is an invalid option; Should not happen\033[0m"
+                echo "ERROR: the option $1 is an invalid option; Should not happen"
                 summary
                 exit 1
                 ;;
@@ -66,8 +65,6 @@ function main()
         # Compare and delete
         compare "$dst_dir" "$src_dir"
     fi
-    # Summary of the general statistics
-    summary "list" "${list_summary[@]}"
 }
 
 function size()
@@ -97,27 +94,11 @@ function size()
     fi
 }
 
-function list_summary()
-{
-    # Update the general statistics
-    list_summary[0]=$((list_summary[0] + $errors))
-    list_summary[1]=$((list_summary[1] + $warnings))
-    list_summary[2]=$((list_summary[2] + $updated))
-    list_summary[3]=$((list_summary[3] + $copied))
-    list_summary[4]=$((list_summary[4] + $copied_size))
-    list_summary[5]=$((list_summary[5] + $deleted))
-    list_summary[6]=$((list_summary[6] + $deleted_size))
-}
+
 function summary()
 {
- if [[ $1 == "list" ]]; then
-        shift # Remove the first argument
-        local sum_list=("$@") # Use the list arguments
-        echo -e "\033[32mWhile backuping general: ${sum_list[0]} Errors; ${sum_list[1]} Warnings; ${sum_list[2]} Updated; ${sum_list[3]} Copied (${sum_list[4]} B); ${sum_list[5]} Deleted (${sum_list[6]} B)\033[0m"
-    else
-        # Use the directory statistics
-        echo -e "\033[32mWhile backuping ${1/"$default_dirname_src/"}: $errors Errors; $warnings Warnings; $updated Updated; $copied Copied (${copied_size}B); $deleted Deleted (${deleted_size}B)\033[0m"
-    fi
+    # Use the directory statistics
+    echo "While backuping ${1/"$default_dirname_src/"}: $errors Errors; $warnings Warnings; $updated Updated; $copied Copied (${copied_size}B); $deleted Deleted (${deleted_size}B)"
 }
 
 # Parameter -c
@@ -151,7 +132,7 @@ function check_arg_amt()
     if [ $# != 2 ]; 
     then
         ((errors++))
-        echo -e "\033[31mERROR: the number of arguments is wrong; Should not happen\033[0m"
+        echo "ERROR: the number of arguments is wrong; Should not happen"
         summary
         exit 1
     fi
@@ -164,7 +145,7 @@ function check_arg_path()
     if  ! check_dir_existence "$src_dir" ||  ! check_dir_existence "$dir_name"; 
     then 
         ((errors++))
-        echo -e "\033[31mERROR: the directories inputed do not exist; Should not happen\033[0m"
+        echo "ERROR: the directories inputed do not exist; Should not happen"
         summary
         exit 1
     fi
@@ -241,7 +222,7 @@ function compare_date()
     elif [  "$dst_file" -nt "$src_file" ] ; 
     then
         # The destination file is newer
-        echo -e "\033[33mWARNING: backup entry $dst_file is newer than $src_file; Should not happen\033[0m"
+        echo "WARNING: backup entry $dst_file is newer than $src_file; Should not happen"
         ((warnings++))
         return 1
     else
@@ -271,14 +252,19 @@ function delete()
             num_files=$(find "$dst_file" -type f | wc -l)
             ((deleted += num_files))
             size "d$dst_file"   
-            simulation rm -r "$dst_file"
-
+            if ! $checking; 
+            then
+                rm -r "$dst_file"
+            fi
         # If the file does not exist in the source, delete it
         elif  ! check_file_existence "$src_dir/$file_name" && check_file_existence "$dst_file" ;
         then
             ((deleted++))
-            size "d$dst_file"   
-            simulation rm "$dst_file"
+            size "d$dst_file"  
+            if ! $checking; 
+            then 
+                rm "$dst_file"
+            fi
         fi
     done
 }
@@ -339,8 +325,6 @@ function compare()
     then
         delete "$src_dir" "$dst_dir"
     fi
-    # Update the general statistics
-    list_summary
     # Call the summary function to display the statistics
     summary $src_dir
 
