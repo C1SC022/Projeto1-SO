@@ -222,7 +222,7 @@ function compare_date()
     elif [  "$dst_file" -nt "$src_file" ] ; 
     then
         # The destination file is newer
-        echo "WARNING: backup entry $dst_file is newer than $src_file; Should not happen"
+        echo "WARNING: backup entry ${dst_file/"$default_dirname_dst/"} is newer than ${src_file/"$default_dirname_src/"}; Should not happen"
         ((warnings++))
         return 1
     else
