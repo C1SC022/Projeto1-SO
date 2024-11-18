@@ -242,7 +242,7 @@ function compare_date()
     then
         # The destination file is newer
         echo -e "\033[33mWARNING: backup entry $dst_file is newer than $src_file; Should not happen\033[0m"
-        ((warnings++1))
+        ((warnings++))
         return 1
     else
     # The files have the same modification date
