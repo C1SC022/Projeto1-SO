@@ -14,11 +14,8 @@ function main()
     # Check if the backup directory indicated exists
     if  ! check_directory_existence "$dst_dir";
     then
-        echo "A backup folder still doesn't exist in that directory."
+        echo "The backup folder directory doesn't exist."
         exit # Exit's the script
-    else
-        echo "The backup folder exists in the $dst_dir directory."
-        
     fi
     check_backup_differences
 }
@@ -57,7 +54,11 @@ function check_backup_differences()
 
         if [ "$src_md5" != "$b_md5" ]; 
         then
-            echo "$src_file & $b_file differ."
+            src_dirname=$(dirname "$src_dir")
+            dst_dirname=$(dirname "$dst_dir")
+            rel_src_path="${src_file#$src_dirname/}"
+            rel_b_path="${b_file#$dst_dirname/}"
+            echo "$rel_src_path & $rel_b_path differ."
         fi
     done
 
