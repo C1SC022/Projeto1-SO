@@ -1,6 +1,5 @@
 one.txt
 two.txt
 five.txt
-esp ao
+esp aco
 .arquivo_oculto
-.dir_oculto
