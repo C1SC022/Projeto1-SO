@@ -97,7 +97,7 @@ function exclude()
 }
 
 # Parameter -r
-function choose()
+function chose()
 {
     # Check if the file name matches the regular expression
     if [[ "$1" =~ "$regexpr" ]]; 
@@ -264,7 +264,7 @@ function compare()
         fi
 
         # Check against regular expressions
-        if [[ "$regexpr_check" == true ]] && choose "$file_name"; 
+        if [[ "$regexpr_check" == true ]] && chose "$file_name"; 
         then
             continue
         fi
